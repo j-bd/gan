@@ -7,8 +7,8 @@ Created on Fri Jan  3 11:19:52 2020
 """
 
 import numpy as np
-from keras.layers import Dense, Dropout, Input
-from keras.models import Model,Sequential
+from keras.layers import Dense, Dropout
+from keras.models import Sequential
 from keras.layers.advanced_activations import LeakyReLU
 from keras.optimizers import adam
 
@@ -35,7 +35,7 @@ class Gan:
     def define_discriminator(self):
         '''Define discriminator structure'''
         discriminator=Sequential()
-        discriminator.add(Dense(units=1024,input_dim=784))
+        discriminator.add(Dense(units=1024, input_dim=784))
         discriminator.add(LeakyReLU(0.2))
         discriminator.add(Dropout(0.3))
         discriminator.add(Dense(units=512))
@@ -50,7 +50,7 @@ class Gan:
     def define_generator(self):
         '''Define generator structure'''
         generator=Sequential()
-        generator.add(Dense(units=256,input_dim=100))
+        generator.add(Dense(units=256, input_dim=100))
         generator.add(LeakyReLU(0.2))
         generator.add(Dense(units=512))
         generator.add(LeakyReLU(0.2))
@@ -92,6 +92,7 @@ class Gan:
             # update weights of the discriminator model
             # define target labels for fake images
             y_fake = np.zeros((self.n_batch, 1))
+            self.discriminator.trainable = True
             # update the discriminator for fake images
             self.discriminator.train_on_batch(X_fake, y_fake)
             # define target labels for real images
