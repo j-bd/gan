@@ -15,7 +15,7 @@ from keras.optimizers import adam
 
 class Gan:
     '''gan implementation'''
-    def init(self, dataset_size, latent_dim, n_epochs, n_batch):
+    def __init__(self, dataset_size, latent_dim, n_epochs, n_batch):
         '''Instance a new gan object'''
         self.latent_dim = latent_dim
         self.n_batch = n_batch
