@@ -7,6 +7,7 @@ Created on Fri Jan  3 11:19:52 2020
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
 from keras.layers import Dense, Dropout
 from keras.models import Sequential
 from keras.layers.advanced_activations import LeakyReLU
@@ -25,9 +26,15 @@ class Gan:
         self.n_steps = self.batches_per_epoch * n_epochs
 
         self.generator = self.define_generator()
+        self.generator.summary()
         self.discriminator = self.define_discriminator()
+        self.discriminator.summary()
         self.gan = self.define_gan(self.generator, self.discriminator)
         self.gan.summary()
+
+        self.loss_fake_d = list()
+        self.loss_real_d = list()
+        self.loss_gan = list()
 
     def adam_optimizer(self):
         '''Define optimizer type'''
@@ -76,6 +83,20 @@ class Gan:
         model.compile(loss='binary_crossentropy', optimizer='adam')
         return model
 
+    def loss_computation(self, list_hist):
+        '''Compute and save model loss'''
+        plt.figure("Training history", figsize=(15.0, 5.0))
+        for element in list_hist:
+            position = 131 + list_hist.index(element)
+            plt.subplot(position)
+            plt.plot(range(1, len(element[0]) + 1), element[0], label=element[1])
+            plt.title("Loss function evolution")
+            plt.legend()
+            plt.xlabel("Number of iterations")
+            plt.ylabel("Loss value")
+        plt.show()
+        plt.savefig(f"gan_mnist-steps{self.n_steps}-training.png")
+
     # gan training algorithm
     def train_gan(self, dataset):
         '''Define the gan training pipeline'''
@@ -95,11 +116,13 @@ class Gan:
             y_fake = np.zeros((self.n_batch, 1))
             self.discriminator.trainable = True
             # update the discriminator for fake images
-            self.discriminator.train_on_batch(x_fake, y_fake)
+            hist_d_fake = self.discriminator.train_on_batch(x_fake, y_fake)
+            self.loss_fake_d.append(hist_d_fake)
             # define target labels for real images
             y_real = np.ones((self.n_batch, 1))
             # update the discriminator for real images
-            self.discriminator.train_on_batch(x_real, y_real)
+            hist_d_real = self.discriminator.train_on_batch(x_real, y_real)
+            self.loss_real_d.append(hist_d_real)
 
             # generate points in the latent space
             latent_space = np.random.randn(self.latent_dim * self.n_batch)
@@ -108,4 +131,14 @@ class Gan:
             # define target labels for real images
             y_real = np.ones((self.n_batch, 1))
             # update generator model
-            self.gan.train_on_batch(latent_space, y_real)
+            hist_g = self.gan.train_on_batch(latent_space, y_real)
+            self.loss_gan.append(hist_g)
+
+        #Loss computation
+        print(self.loss_fake_d)
+        loss_list = [
+            (np.mean(self.loss_fake_d), "discriminator_fake_detection"),
+            (np.mean(self.loss_real_d), "discriminator_real_detection"),
+            (np.mean(self.loss_gan), "gan_detection")
+        ]
+        self.loss_computation(loss_list)
